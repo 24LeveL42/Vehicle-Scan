@@ -308,22 +308,39 @@
         setStep(2, 'active', 'Looking up place name...');
         setStatus('Got coordinates, resolving location name...');
 
-        fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json&accept-language=en')
+        // Primary: BigDataCloud (reliable, no API key)
+        fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat + '&longitude=' + lon + '&localityLanguage=en')
           .then(r => r.json())
           .then(data => {
-            const a = data.address || {};
-            const area = a.suburb || a.city_district || a.neighbourhood || a.quarter || a.village || a.town || '';
-            const city = a.city || a.state_district || a.county || a.state || '';
-            const country = a.country || '';
+            const locality = data.locality || data.city || '';
+            const city = data.principalSubdivision || data.city || '';
+            const country = data.countryName || '';
             let locationName = '';
-            if (area && city) locationName = area + ', ' + city;
-            else if (area) locationName = area + (country ? ', ' + country : '');
+            if (locality && city && locality !== city) locationName = locality + ', ' + city;
+            else if (locality) locationName = locality + (country ? ', ' + country : '');
             else if (city) locationName = city + (country ? ', ' + country : '');
-            else locationName = data.display_name ? data.display_name.split(',').slice(0,2).join(',').trim() : lat.toFixed(4) + ', ' + lon.toFixed(4);
+            else locationName = lat.toFixed(4) + ', ' + lon.toFixed(4);
             redirectToForm(locationName);
           })
           .catch(() => {
-            redirectToForm(lat.toFixed(5) + ', ' + lon.toFixed(5));
+            // Fallback: Nominatim
+            fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json&accept-language=en')
+              .then(r => r.json())
+              .then(data => {
+                const a = data.address || {};
+                const area = a.suburb || a.city_district || a.neighbourhood || a.town || '';
+                const city = a.city || a.state || '';
+                let locationName = '';
+                if (area && city) locationName = area + ', ' + city;
+                else if (area) locationName = area;
+                else if (city) locationName = city;
+                else locationName = lat.toFixed(4) + ', ' + lon.toFixed(4);
+                redirectToForm(locationName);
+              })
+              .catch(() => {
+                // Last resort: just use coordinates
+                redirectToForm(lat.toFixed(4) + ', ' + lon.toFixed(4));
+              });
           });
       },
       function(err) {
