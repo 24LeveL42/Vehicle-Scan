@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Vehicle Check-In</title>
+  <title>Fleet Management 2026</title>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -16,362 +16,476 @@
       --red: #ff4d6d;
       --text: #e2e8f0;
       --muted: #64748b;
+      --border: rgba(0,212,255,0.15);
     }
     body {
       background: var(--navy);
       color: var(--text);
       font-family: 'DM Sans', sans-serif;
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
+      padding: 24px 16px 40px;
     }
     body::before {
       content: '';
       position: fixed;
       inset: 0;
       background-image:
-        linear-gradient(rgba(0,212,255,0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,212,255,0.04) 1px, transparent 1px);
+        linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
       background-size: 40px 40px;
-      z-index: 0;
-      animation: gridMove 20s linear infinite;
-    }
-    @keyframes gridMove {
-      0% { background-position: 0 0; }
-      100% { background-position: 40px 40px; }
-    }
-    body::after {
-      content: '';
-      position: fixed;
-      top: -100px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 500px;
-      height: 500px;
-      background: radial-gradient(circle, rgba(0,119,255,0.15) 0%, transparent 70%);
       z-index: 0;
       pointer-events: none;
     }
-    .card {
+    .container {
       position: relative;
       z-index: 1;
-      background: var(--panel);
-      border: 1px solid rgba(0,212,255,0.15);
-      border-radius: 20px;
-      padding: 40px 36px;
-      max-width: 380px;
-      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    /* HEADER */
+    .header {
       text-align: center;
-      box-shadow: 0 0 40px rgba(0,212,255,0.07), 0 20px 60px rgba(0,0,0,0.5);
+      margin-bottom: 24px;
+      padding: 28px 24px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
     }
     .icon-wrap {
-      width: 72px;
-      height: 72px;
+      width: 60px; height: 60px;
       background: linear-gradient(135deg, var(--accent2), var(--accent));
       border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 20px;
-      box-shadow: 0 0 24px rgba(0,212,255,0.3);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 14px;
+      box-shadow: 0 0 20px rgba(0,212,255,0.3);
     }
-    .icon-wrap svg { width: 36px; height: 36px; fill: white; }
+    .icon-wrap svg { width: 30px; height: 30px; fill: white; }
     h1 {
       font-family: 'Rajdhani', sans-serif;
-      font-size: 1.9rem;
+      font-size: 1.6rem;
       font-weight: 700;
-      letter-spacing: 1px;
       color: white;
-      margin-bottom: 6px;
+      letter-spacing: 1px;
     }
-    .subtitle { font-size: 0.85rem; color: var(--muted); margin-bottom: 32px; }
-    .info-row {
+    .subtitle { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+    /* BADGES */
+    .badges {
       display: flex;
+      gap: 8px;
       justify-content: center;
-      gap: 10px;
-      margin-bottom: 28px;
       flex-wrap: wrap;
+      margin-top: 16px;
     }
-    .info-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+    .badge {
       background: rgba(0,212,255,0.08);
       border: 1px solid rgba(0,212,255,0.2);
       border-radius: 999px;
-      padding: 5px 14px;
-      font-size: 0.78rem;
+      padding: 4px 12px;
+      font-size: 0.75rem;
       color: var(--accent);
       font-weight: 500;
     }
-    .steps {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      text-align: left;
-      margin-bottom: 28px;
+    /* DETECTING SCREEN */
+    #detecting-screen {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px 24px;
+      text-align: center;
     }
-    .step {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 12px 16px;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.06);
-      transition: all 0.4s ease;
-    }
-    .step.active { background: rgba(0,212,255,0.07); border-color: rgba(0,212,255,0.25); }
-    .step.done   { background: rgba(0,255,176,0.06); border-color: rgba(0,255,176,0.2); }
-    .step.error  { background: rgba(255,77,109,0.08); border-color: rgba(255,77,109,0.25); }
-    .step-dot {
-      width: 28px; height: 28px;
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid rgba(0,212,255,0.2);
+      border-top-color: var(--accent);
       border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      font-size: 0.75rem; font-weight: 700;
-      background: rgba(255,255,255,0.06);
-      color: var(--muted);
-      transition: all 0.4s ease;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
     }
-    .step.active .step-dot { background: var(--accent); color: var(--navy); animation: pulse 1.2s ease infinite; }
-    .step.done   .step-dot { background: var(--green); color: var(--navy); }
-    .step.error  .step-dot { background: var(--red); color: white; }
-    @keyframes pulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(0,212,255,0.4); }
-      50%       { box-shadow: 0 0 0 8px rgba(0,212,255,0); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #detecting-msg { font-size: 0.9rem; color: var(--muted); }
+    /* FORM */
+    #form-screen { display: none; }
+    .form-section {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 12px;
     }
-    .step-text { flex: 1; }
-    .step-label { font-size: 0.82rem; font-weight: 500; color: var(--text); }
-    .step-desc  { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
-    .step.active .step-label { color: var(--accent); }
-    .step.done   .step-label { color: var(--green); }
-    .step.error  .step-label { color: var(--red); }
-    .progress-bar { height: 3px; background: rgba(255,255,255,0.07); border-radius: 99px; overflow: hidden; margin-bottom: 20px; }
-    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); border-radius: 99px; width: 0%; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
-    #status-msg { font-size: 0.8rem; color: var(--muted); min-height: 20px; margin-bottom: 16px; }
-    #retry-btn {
-      display: none;
-      margin-top: 12px;
-      padding: 12px 28px;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 10px;
-      color: white;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.9rem;
+    .section-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .field { margin-bottom: 14px; }
+    .field:last-child { margin-bottom: 0; }
+    label {
+      display: block;
+      font-size: 0.78rem;
       font-weight: 600;
-      cursor: pointer;
-      width: 100%;
+      color: var(--text);
+      margin-bottom: 6px;
+      letter-spacing: 0.3px;
     }
-    #open-form-btn {
-      display: none;
-      margin-top: 12px;
-      padding: 16px 28px;
+    input[type="text"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus,
+    select:focus,
+    textarea:focus { border-color: var(--accent); }
+    input.auto-filled {
+      background: rgba(0,255,176,0.06);
+      border-color: rgba(0,255,176,0.3);
+      color: var(--green);
+      font-weight: 600;
+    }
+    select option { background: #1f2937; color: white; }
+    .vehicle-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .vehicle-row:last-child { margin-bottom: 0; }
+    .vehicle-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+    }
+    /* SUBMIT */
+    #submit-btn {
+      width: 100%;
+      padding: 16px;
       background: linear-gradient(135deg, #0077ff, #00d4ff);
+      border: none;
       border-radius: 12px;
       color: white;
       font-family: 'Rajdhani', sans-serif;
       font-size: 1.2rem;
       font-weight: 700;
-      width: 100%;
-      text-decoration: none;
-      text-align: center;
       letter-spacing: 1px;
-      box-shadow: 0 0 24px rgba(0,212,255,0.3);
+      cursor: pointer;
+      margin-top: 4px;
+      box-shadow: 0 0 24px rgba(0,212,255,0.25);
     }
-    .footer-note { position: relative; z-index: 1; margin-top: 20px; font-size: 0.72rem; color: var(--muted); text-align: center; }
+    #submit-btn:active { opacity: 0.85; }
+    /* SUCCESS SCREEN */
+    #success-screen {
+      display: none;
+      background: var(--panel);
+      border: 1px solid rgba(0,255,176,0.2);
+      border-radius: 16px;
+      padding: 40px 24px;
+      text-align: center;
+    }
+    .success-icon {
+      width: 70px; height: 70px;
+      background: rgba(0,255,176,0.1);
+      border: 2px solid var(--green);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 2rem;
+    }
+    #success-screen h2 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.6rem;
+      color: var(--green);
+      margin-bottom: 8px;
+    }
+    #success-screen p { font-size: 0.85rem; color: var(--muted); }
+    #new-entry-btn {
+      margin-top: 20px;
+      padding: 12px 24px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      color: white;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      cursor: pointer;
+      width: 100%;
+    }
+    iframe { display: none; }
   </style>
 </head>
 <body>
+<iframe name="hidden_iframe" id="hidden_iframe"></iframe>
 
-<div class="card">
-  <div class="icon-wrap">
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
-    </svg>
-  </div>
-
-  <h1>VEHICLE CHECK-IN</h1>
-  <p class="subtitle">Fleet Management 2026</p>
-
-  <div class="info-row">
-    <div class="info-badge" id="badge-location">📍 Detecting...</div>
-    <div class="info-badge" id="badge-time">🕐 --:--</div>
-    <div class="info-badge" id="badge-date">📅 --/--/----</div>
-  </div>
-
-  <div class="progress-bar">
-    <div class="progress-fill" id="progress"></div>
-  </div>
-
-  <div class="steps">
-    <div class="step active" id="step1">
-      <div class="step-dot">1</div>
-      <div class="step-text">
-        <div class="step-label">Detecting Location</div>
-        <div class="step-desc">Getting your current position...</div>
-      </div>
+<div class="container">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="icon-wrap">
+      <svg viewBox="0 0 24 24"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
     </div>
-    <div class="step" id="step2">
-      <div class="step-dot">2</div>
-      <div class="step-text">
-        <div class="step-label">Resolving Place Name</div>
-        <div class="step-desc">Converting to address...</div>
-      </div>
-    </div>
-    <div class="step" id="step3">
-      <div class="step-dot">3</div>
-      <div class="step-text">
-        <div class="step-label">Ready!</div>
-        <div class="step-desc">Tap the button below to open form</div>
-      </div>
+    <h1>FLEET MANAGEMENT 2026</h1>
+    <p class="subtitle">Track and Wheel Vehicle Management System (TWVM)</p>
+    <div class="badges">
+      <div class="badge" id="badge-loc">📍 Detecting...</div>
+      <div class="badge" id="badge-time">🕐 --:--</div>
+      <div class="badge" id="badge-date">📅 --/--/----</div>
     </div>
   </div>
 
-  <p id="status-msg">Please allow location access when prompted.</p>
-  <button id="retry-btn" onclick="startLocationDetection()">📍 Try Again</button>
-  <a id="open-form-btn" href="#" target="_blank">🚗 OPEN CHECK-IN FORM</a>
+  <!-- DETECTING SCREEN -->
+  <div id="detecting-screen">
+    <div class="spinner"></div>
+    <p id="detecting-msg">Detecting your location...<br>Please allow location access.</p>
+  </div>
+
+  <!-- FORM SCREEN -->
+  <div id="form-screen">
+    <form id="main-form"
+      action="https://docs.google.com/forms/d/e/1FAIpQLSfs-5sr6D7VY7foOeaJMNGsd0F0iUTr33UkKXBj_8fkN0Xjlw/formResponse"
+      method="POST"
+      target="hidden_iframe"
+      onsubmit="handleSubmit()">
+
+      <!-- AUTO-FILLED INFO -->
+      <div class="form-section">
+        <div class="section-title">📍 Auto-Detected Info</div>
+        <div class="field">
+          <label>Location of Vehicle</label>
+          <input type="text" name="entry.1638188017" id="location-input" class="auto-filled" readonly/>
+        </div>
+        <div class="vehicle-row">
+          <div>
+            <div class="vehicle-label">DATE</div>
+            <input type="date" name="entry.1249319498" id="date-input" class="auto-filled" readonly/>
+          </div>
+          <div>
+            <div class="vehicle-label">TIME</div>
+            <input type="text" name="entry.1249319498_time" id="time-input" class="auto-filled" readonly/>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRACK VEHICLES -->
+      <div class="form-section">
+        <div class="section-title">🚗 Track Vehicles</div>
+
+        <div class="vehicle-row">
+          <div>
+            <div class="vehicle-label">BRONCO</div>
+            <select name="entry.1832736798">
+              <option value="">-</option>
+              <option value="Option 1">Option 1</option>
+            </select>
+          </div>
+          <div>
+            <div class="vehicle-label">BRONCO VARIANT</div>
+            <input type="text" name="entry.701405545" placeholder="Variant"/>
+          </div>
+        </div>
+
+        <div class="vehicle-row">
+          <div>
+            <div class="vehicle-label">BX1+</div>
+            <select name="entry.823936035">
+              <option value="">-</option>
+              <option value="Option 1">Option 1</option>
+            </select>
+          </div>
+          <div>
+            <div class="vehicle-label">BX1+ VARIANT</div>
+            <input type="text" name="entry.334412356" placeholder="Variant"/>
+          </div>
+        </div>
+
+        <div class="vehicle-row">
+          <div>
+            <div class="vehicle-label">HUNTER</div>
+            <select name="entry.1073032205">
+              <option value="">-</option>
+              <option value="Option 1">Option 1</option>
+            </select>
+          </div>
+          <div>
+            <div class="vehicle-label">HUNTER VARIANT</div>
+            <input type="text" name="entry.533134132" placeholder="Variant"/>
+          </div>
+        </div>
+
+        <div class="vehicle-row">
+          <div>
+            <div class="vehicle-label">L2SG</div>
+            <select name="entry.1487414073">
+              <option value="">-</option>
+              <option value="Option 1">Option 1</option>
+            </select>
+          </div>
+          <div>
+            <div class="vehicle-label">L2SG VARIANT</div>
+            <input type="text" name="entry.1672618530" placeholder="Variant"/>
+          </div>
+        </div>
+
+        <div class="vehicle-row">
+          <div>
+            <div class="vehicle-label">BV206</div>
+            <select name="entry.591520636">
+              <option value="">-</option>
+              <option value="Option 1">Option 1</option>
+            </select>
+          </div>
+          <div>
+            <div class="vehicle-label">BV206 VARIANT</div>
+            <input type="text" name="entry.1082824642" placeholder="Variant"/>
+          </div>
+        </div>
+
+        <div class="vehicle-row">
+          <div>
+            <div class="vehicle-label">M113</div>
+            <select name="entry.716519917">
+              <option value="">-</option>
+              <option value="Option 1">Option 1</option>
+            </select>
+          </div>
+          <div>
+            <div class="vehicle-label">M113 VARIANT</div>
+            <input type="text" name="entry.1109786811" placeholder="Variant"/>
+          </div>
+        </div>
+
+        <div class="vehicle-row">
+          <div>
+            <div class="vehicle-label">TRAILER CARGO</div>
+            <select name="entry.970010236">
+              <option value="">-</option>
+              <option value="Option 1">Option 1</option>
+            </select>
+          </div>
+          <div></div>
+        </div>
+      </div>
+
+      <!-- PERSONNEL INFO -->
+      <div class="form-section">
+        <div class="section-title">👤 Personnel Info</div>
+        <div class="field">
+          <label>Unit</label>
+          <input type="text" name="entry.767586133" placeholder="Enter unit"/>
+        </div>
+        <div class="field">
+          <label>Rank & Name</label>
+          <input type="text" name="entry.1271592841" placeholder="Enter rank and name"/>
+        </div>
+        <div class="field">
+          <label>Defects of Vehicle</label>
+          <input type="text" name="entry.640089832" placeholder="Enter defects or NIL"/>
+        </div>
+      </div>
+
+      <button type="submit" id="submit-btn">✅ SUBMIT CHECK-IN</button>
+    </form>
+  </div>
+
+  <!-- SUCCESS SCREEN -->
+  <div id="success-screen">
+    <div class="success-icon">✅</div>
+    <h2>SUBMITTED!</h2>
+    <p>Your check-in has been recorded successfully.</p>
+    <button id="new-entry-btn" onclick="resetForm()">📋 New Entry</button>
+  </div>
 </div>
 
-<p class="footer-note">Location is used only to pre-fill the check-in form.</p>
-
 <script>
-  const FORM_BASE      = 'https://docs.google.com/forms/d/e/1FAIpQLSfs-5sr6D7VY7foOeaJMNGsd0F0iUTr33UkKXBj_8fkN0Xjlw/viewform';
-  const ENTRY_LOCATION = 'entry.1638188017';
-  const ENTRY_DATE     = 'entry.1249319498';
-  const ENTRY_TIME     = 'entry.1249319498_time';
+  var detectedLocation = '';
 
-  function updateBadges() {
-    const now = new Date();
-    const hh  = String(now.getHours()).padStart(2,'0');
-    const min = String(now.getMinutes()).padStart(2,'0');
-    const dd  = String(now.getDate()).padStart(2,'0');
-    const mm  = String(now.getMonth()+1).padStart(2,'0');
-    const yyyy = now.getFullYear();
+  // Live clock
+  function updateClock() {
+    var now = new Date();
+    var hh = String(now.getHours()).padStart(2,'0');
+    var min = String(now.getMinutes()).padStart(2,'0');
+    var dd = String(now.getDate()).padStart(2,'0');
+    var mm = String(now.getMonth()+1).padStart(2,'0');
+    var yyyy = now.getFullYear();
     document.getElementById('badge-time').textContent = '🕐 ' + hh + ':' + min;
     document.getElementById('badge-date').textContent = '📅 ' + dd + '/' + mm + '/' + yyyy;
+    document.getElementById('time-input').value = hh + ':' + min;
   }
-  updateBadges();
-  setInterval(updateBadges, 1000);
+  updateClock();
+  setInterval(updateClock, 1000);
 
-  function getToday() {
-    const d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  function setDateField() {
+    var now = new Date();
+    var yyyy = now.getFullYear();
+    var mm = String(now.getMonth()+1).padStart(2,'0');
+    var dd = String(now.getDate()).padStart(2,'0');
+    document.getElementById('date-input').value = yyyy + '-' + mm + '-' + dd;
   }
+  setDateField();
 
-  function getNow() {
-    const d = new Date();
-    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
-  }
-
-  function setStep(step, state, desc) {
-    const el = document.getElementById('step' + step);
-    el.className = 'step ' + state;
-    if (desc) el.querySelector('.step-desc').textContent = desc;
-    const progressMap = { 1:'33%', 2:'66%', 3:'100%' };
-    if (state === 'active' || state === 'done') {
-      document.getElementById('progress').style.width = progressMap[step];
-    }
+  function showForm(locationName) {
+    detectedLocation = locationName;
+    document.getElementById('location-input').value = locationName;
+    document.getElementById('badge-loc').textContent = '📍 ' + locationName;
+    document.getElementById('detecting-screen').style.display = 'none';
+    document.getElementById('form-screen').style.display = 'block';
   }
 
-  function setStatus(msg) {
-    document.getElementById('status-msg').textContent = msg;
+  function handleSubmit() {
+    setTimeout(function() {
+      document.getElementById('form-screen').style.display = 'none';
+      document.getElementById('success-screen').style.display = 'block';
+    }, 800);
   }
 
-  function buildFormUrl(locationName) {
-    const params = new URLSearchParams();
-    params.set('usp', 'pp_url');
-    params.set(ENTRY_LOCATION, locationName);
-    params.set(ENTRY_DATE, getToday());
-    params.set(ENTRY_TIME, getNow());
-    return FORM_BASE + '?' + params.toString();
+  function resetForm() {
+    document.getElementById('main-form').reset();
+    document.getElementById('location-input').value = detectedLocation;
+    setDateField();
+    document.getElementById('success-screen').style.display = 'none';
+    document.getElementById('form-screen').style.display = 'block';
   }
 
-  function showFormButton(locationName) {
-    document.getElementById('badge-location').textContent = '📍 ' + locationName;
-    setStep(1, 'done', 'Position acquired ✓');
-    setStep(2, 'done', locationName);
-    setStep(3, 'done', 'Tap the button below to open form!');
-    setStatus('✅ Location ready! Tap the button to open the form.');
-    var btn = document.getElementById('open-form-btn');
-    btn.href = buildFormUrl(locationName);
-    btn.style.display = 'block';
-  }
-
-  function showError(msg) {
-    setStep(1, 'error', msg);
-    setStatus(msg);
-    document.getElementById('retry-btn').style.display = 'block';
-  }
-
-  function startLocationDetection() {
-    document.getElementById('retry-btn').style.display = 'none';
-    document.getElementById('open-form-btn').style.display = 'none';
-    setStep(1, 'active', 'Getting your current position...');
-    setStatus('Please allow location access when prompted.');
-
-    if (!navigator.geolocation) {
-      showFormButton('Location Not Supported');
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      function(pos) {
-        var lat = pos.coords.latitude;
-        var lon = pos.coords.longitude;
-        setStep(2, 'active', 'Looking up place name...');
-        setStatus('Got coordinates, resolving location name...');
-
-        fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat + '&longitude=' + lon + '&localityLanguage=en')
-          .then(function(r) { return r.json(); })
-          .then(function(data) {
-            var locality = data.locality || data.city || '';
-            var city = data.principalSubdivision || data.city || '';
-            var country = data.countryName || '';
-            var locationName = '';
-            if (locality && city && locality !== city) locationName = locality + ', ' + city;
-            else if (locality) locationName = locality + (country ? ', ' + country : '');
-            else if (city) locationName = city + (country ? ', ' + country : '');
-            else locationName = lat.toFixed(4) + ', ' + lon.toFixed(4);
-            showFormButton(locationName);
-          })
-          .catch(function() {
-            fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json&accept-language=en')
-              .then(function(r) { return r.json(); })
-              .then(function(data) {
-                var a = data.address || {};
-                var area = a.suburb || a.city_district || a.neighbourhood || a.town || '';
-                var city = a.city || a.state || '';
-                var locationName = '';
-                if (area && city) locationName = area + ', ' + city;
-                else if (area) locationName = area;
-                else if (city) locationName = city;
-                else locationName = lat.toFixed(4) + ', ' + lon.toFixed(4);
-                showFormButton(locationName);
-              })
-              .catch(function() {
-                showFormButton(lat.toFixed(4) + ', ' + lon.toFixed(4));
-              });
-          });
-      },
-      function(err) {
-        if (err.code === 1) {
-          showError('Location access denied. Please allow it and try again.');
-        } else if (err.code === 2) {
-          showError('Location unavailable. Check your GPS signal.');
-        } else {
-          showFormButton('Location Unavailable');
-        }
-      },
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
-    );
-  }
-
-  window.addEventListener('load', startLocationDetection);
+  // Location detection
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      var lat = pos.coords.latitude;
+      var lon = pos.coords.longitude;
+      fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat + '&longitude=' + lon + '&localityLanguage=en')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var locality = data.locality || '';
+          var city = data.principalSubdivision || data.city || '';
+          var locationName = '';
+          if (locality && city && locality !== city) locationName = locality + ', ' + city;
+          else if (locality) locationName = locality;
+          else if (city) locationName = city;
+          else locationName = lat.toFixed(4) + ', ' + lon.toFixed(4);
+          showForm(locationName);
+        })
+        .catch(function() {
+          showForm(lat.toFixed(4) + ', ' + lon.toFixed(4));
+        });
+    },
+    function() {
+      showForm('Location Unavailable');
+    },
+    { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+  );
 </script>
 </body>
 </html>
