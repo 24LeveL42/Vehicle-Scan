@@ -27,7 +27,6 @@
       align-items: center;
       justify-content: center;
       padding: 24px;
-      overflow: hidden;
     }
     body::before {
       content: '';
@@ -153,17 +152,36 @@
     .step.error  .step-label { color: var(--red); }
     .progress-bar { height: 3px; background: rgba(255,255,255,0.07); border-radius: 99px; overflow: hidden; margin-bottom: 20px; }
     .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); border-radius: 99px; width: 0%; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
-    #status-msg { font-size: 0.8rem; color: var(--muted); min-height: 20px; }
+    #status-msg { font-size: 0.8rem; color: var(--muted); min-height: 20px; margin-bottom: 16px; }
     #retry-btn {
       display: none;
-      margin-top: 20px;
+      margin-top: 12px;
       padding: 12px 28px;
-      background: linear-gradient(135deg, var(--accent2), var(--accent));
-      border: none; border-radius: 10px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
       color: white;
       font-family: 'DM Sans', sans-serif;
-      font-size: 0.9rem; font-weight: 600;
-      cursor: pointer; width: 100%;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+    }
+    #open-form-btn {
+      display: none;
+      margin-top: 12px;
+      padding: 16px 28px;
+      background: linear-gradient(135deg, #0077ff, #00d4ff);
+      border-radius: 12px;
+      color: white;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      width: 100%;
+      text-decoration: none;
+      text-align: center;
+      letter-spacing: 1px;
+      box-shadow: 0 0 24px rgba(0,212,255,0.3);
     }
     .footer-note { position: relative; z-index: 1; margin-top: 20px; font-size: 0.72rem; color: var(--muted); text-align: center; }
   </style>
@@ -178,7 +196,7 @@
   </div>
 
   <h1>VEHICLE CHECK-IN</h1>
-  <p class="subtitle">Track Vehicle Routine</p>
+  <p class="subtitle">Fleet Management 2026</p>
 
   <div class="info-row">
     <div class="info-badge" id="badge-location">📍 Detecting...</div>
@@ -208,14 +226,15 @@
     <div class="step" id="step3">
       <div class="step-dot">3</div>
       <div class="step-text">
-        <div class="step-label">Opening Form</div>
-        <div class="step-desc">Redirecting to check-in form...</div>
+        <div class="step-label">Ready!</div>
+        <div class="step-desc">Tap the button below to open form</div>
       </div>
     </div>
   </div>
 
   <p id="status-msg">Please allow location access when prompted.</p>
   <button id="retry-btn" onclick="startLocationDetection()">📍 Try Again</button>
+  <a id="open-form-btn" href="#" target="_blank">🚗 OPEN CHECK-IN FORM</a>
 </div>
 
 <p class="footer-note">Location is used only to pre-fill the check-in form.</p>
@@ -226,7 +245,6 @@
   const ENTRY_DATE     = 'entry.1249319498';
   const ENTRY_TIME     = 'entry.1249319498_time';
 
-  // Show live time and date in badges
   function updateBadges() {
     const now = new Date();
     const hh  = String(now.getHours()).padStart(2,'0');
@@ -255,8 +273,9 @@
     el.className = 'step ' + state;
     if (desc) el.querySelector('.step-desc').textContent = desc;
     const progressMap = { 1:'33%', 2:'66%', 3:'100%' };
-    if (state === 'active') document.getElementById('progress').style.width = progressMap[step];
-    if (step === 3 && state === 'done') document.getElementById('progress').style.width = '100%';
+    if (state === 'active' || state === 'done') {
+      document.getElementById('progress').style.width = progressMap[step];
+    }
   }
 
   function setStatus(msg) {
@@ -272,15 +291,15 @@
     return FORM_BASE + '?' + params.toString();
   }
 
-  function redirectToForm(locationName) {
+  function showFormButton(locationName) {
     document.getElementById('badge-location').textContent = '📍 ' + locationName;
+    setStep(1, 'done', 'Position acquired ✓');
     setStep(2, 'done', locationName);
-    setStep(3, 'active', 'Redirecting now...');
-    setStatus('Location found: ' + locationName);
-    setTimeout(() => {
-      setStep(3, 'done', 'Form opened!');
-      window.location.href = buildFormUrl(locationName);
-    }, 800);
+    setStep(3, 'done', 'Tap the button below to open form!');
+    setStatus('✅ Location ready! Tap the button to open the form.');
+    var btn = document.getElementById('open-form-btn');
+    btn.href = buildFormUrl(locationName);
+    btn.style.display = 'block';
   }
 
   function showError(msg) {
@@ -291,56 +310,51 @@
 
   function startLocationDetection() {
     document.getElementById('retry-btn').style.display = 'none';
+    document.getElementById('open-form-btn').style.display = 'none';
     setStep(1, 'active', 'Getting your current position...');
-    setStep(2, 'step', 'Converting to address...');
-    setStep(3, 'step', 'Redirecting to check-in form...');
     setStatus('Please allow location access when prompted.');
 
     if (!navigator.geolocation) {
-      redirectToForm('Location Not Supported');
+      showFormButton('Location Not Supported');
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
       function(pos) {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-        setStep(1, 'done', 'Position acquired ✓');
+        var lat = pos.coords.latitude;
+        var lon = pos.coords.longitude;
         setStep(2, 'active', 'Looking up place name...');
         setStatus('Got coordinates, resolving location name...');
 
-        // Primary: BigDataCloud (reliable, no API key)
         fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat + '&longitude=' + lon + '&localityLanguage=en')
-          .then(r => r.json())
-          .then(data => {
-            const locality = data.locality || data.city || '';
-            const city = data.principalSubdivision || data.city || '';
-            const country = data.countryName || '';
-            let locationName = '';
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            var locality = data.locality || data.city || '';
+            var city = data.principalSubdivision || data.city || '';
+            var country = data.countryName || '';
+            var locationName = '';
             if (locality && city && locality !== city) locationName = locality + ', ' + city;
             else if (locality) locationName = locality + (country ? ', ' + country : '');
             else if (city) locationName = city + (country ? ', ' + country : '');
             else locationName = lat.toFixed(4) + ', ' + lon.toFixed(4);
-            redirectToForm(locationName);
+            showFormButton(locationName);
           })
-          .catch(() => {
-            // Fallback: Nominatim
+          .catch(function() {
             fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json&accept-language=en')
-              .then(r => r.json())
-              .then(data => {
-                const a = data.address || {};
-                const area = a.suburb || a.city_district || a.neighbourhood || a.town || '';
-                const city = a.city || a.state || '';
-                let locationName = '';
+              .then(function(r) { return r.json(); })
+              .then(function(data) {
+                var a = data.address || {};
+                var area = a.suburb || a.city_district || a.neighbourhood || a.town || '';
+                var city = a.city || a.state || '';
+                var locationName = '';
                 if (area && city) locationName = area + ', ' + city;
                 else if (area) locationName = area;
                 else if (city) locationName = city;
                 else locationName = lat.toFixed(4) + ', ' + lon.toFixed(4);
-                redirectToForm(locationName);
+                showFormButton(locationName);
               })
-              .catch(() => {
-                // Last resort: just use coordinates
-                redirectToForm(lat.toFixed(4) + ', ' + lon.toFixed(4));
+              .catch(function() {
+                showFormButton(lat.toFixed(4) + ', ' + lon.toFixed(4));
               });
           });
       },
@@ -350,7 +364,7 @@
         } else if (err.code === 2) {
           showError('Location unavailable. Check your GPS signal.');
         } else {
-          redirectToForm('Location Unavailable');
+          showFormButton('Location Unavailable');
         }
       },
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
